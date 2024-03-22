@@ -1,0 +1,97 @@
+- hosts: masters
+  become: true
+
+  tasks:
+  
+  - name: Remove Docker packages
+    apt:
+      name: "{{ item }}"
+      state: absent
+    loop:
+      - docker.io
+      - docker-doc
+      - docker-compose
+      - docker-compose-v2
+      - podman-docker
+      - containerd
+      - runc
+
+  - name: Remove unused dependencies
+    apt:
+      autoremove: yes
+      cache_valid_time: 0  # Force update
+
+  - name: Update package lists
+    apt:
+      update_cache: yes
+
+  - name: Install ca-certificates and curl
+    apt:
+      name:
+        - ca-certificates
+        - curl
+      state: present
+
+  - name: Create directory for Docker GPG key
+    file:
+      path: /etc/apt/keyrings
+      state: directory
+      mode: 0755
+
+  - name: Add Docker GPG apt Key
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+
+
+  - name: Set permissions for Docker GPG key
+    file:
+      path: /etc/apt/keyrings/docker.asc
+      mode: 0444
+
+
+  - name: Add Docker Repository
+    apt_repository:
+      repo: deb https://download.docker.com/linux/ubuntu focal stable
+      state: present
+
+
+  - name: Update package lists (again, after adding repository)
+    apt:
+      update_cache: yes
+
+  
+  - name: Install docker-ce
+    apt:
+      name:
+        - docker-ce
+      state: present
+      update_cache: yes
+  - name: Install docker-ce-cli
+    apt:
+      name:
+        - docker-ce-cli
+      state: present
+
+  - name: Install containerd.io
+    apt:
+      name:
+        - containerd.io
+      state: present
+
+  - name: Install docker-buildx-plugin
+    apt:
+      name:
+        - docker-buildx-plugin
+      state: present
+
+  - name: Install docker-compose-plugin
+    apt:
+      name:
+        - docker-compose-plugin
+      state: present
+
+  - name: Copy containerd config using shell
+    shell: containerd config default > /etc/containerd/config.toml
+
+  

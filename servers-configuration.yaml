@@ -1,0 +1,79 @@
+- name: Servers Configuration
+  hosts: all
+  become: true
+
+  tasks:
+  - name: Swapoff all swap partitions 
+    command: swapoff -a
+
+  - name: Copy containerd config using shell
+    shell: sed --i '\|swap|s|^/|#/|g' /etc/fstab
+
+  - name: To use the systemd cgroup driver in containerd with runc
+    shell: sed -E -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
+
+  - name: Systemctl Restart Containerd
+    shell: systemctl restart containerd
+
+  - name: modprobe br_netfilter overlay
+    shell: modprobe br_netfilter overlay
+
+  - name: enables IP forwarding
+    shell: sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/g' /etc/sysctl.conf
+
+  - name: applies sysctl --system
+    shell: sysctl --system; sysctl -a | grep net.ipv4.ip_forward
+
+
+  - name: Update apt cache
+    apt:
+      update_cache: yes
+
+  - name: Install apt-transport-https
+    apt:
+      name: apt-transport-https
+      state: present
+
+  - name: Install ca-certificates
+    apt:
+      name: ca-certificates
+      state: present
+
+  - name: Install curl
+    apt:
+      name: curl
+      state: present
+
+  - name: Install conntrack
+    apt:
+      name: conntrack
+      state: present
+
+
+
+
+  # - name: Backup /etc/fstab 
+  #   copy:
+  #     src: /etc/fstab
+  #     dest: /tmp/fstab.bak
+  #     mode: 0644
+
+  # - name: Read current fstab entries
+  #   slurp:
+  #     src: /etc/fstab
+  #   register: fstab_content
+
+  # - name: Modify swap entries 
+  #   lineinfile:
+  #     path: /etc/fstab
+  #     state: present
+  #     backups: yes  # Create backup before modification
+  #     create: no   # Don't create the file if missing
+  #     regexp: '^([^#]|\s*#)*\s*swap\s*'  # Match lines starting with swap, not comments
+  #     replace: '\s*swap\s*'  # Replace swap with whitespace
+  #     line: '{{ item.line }}'  # Use loop variable for line content
+  #   loop: "{{ fstab_content.content.splitlines() }}"
+
+  # - name: Verify fstab changes (optional)
+  #   debug:
+  #     msg: "/etc/fstab content after modification: {{ lookup('file', '/etc/fstab') }}"
