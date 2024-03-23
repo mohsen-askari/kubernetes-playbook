@@ -1,0 +1,101 @@
+- name: Install and configure Kubernetes cluster
+  hosts: all
+  become: true
+
+  tasks:
+
+
+  - name: Add to kubernetes.list
+    shell: echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list
+
+
+  # - name: Curl gpg
+  #   shell: curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+
+  # - name: Add Kubernetes APT key (if not exists)
+  #   shell: |
+  #     if ! gpg --list-keys kubernetes-apt-keyring.gpg | grep -q "fingerprint: "; then
+  #       curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  #     fi
+
+
+  # - name: Add Kubernetes APT key (if not exists)
+  #   apt_key:
+  #     url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
+  #     state: present
+  #     force: yes
+
+  - name: apt update
+    shell: apt update
+
+  - name: Install kubeadm, kubelet, and kubectl
+    apt:
+      name: "{{ item }}"
+      state: present
+    loop:
+      - kubeadm
+      - kubelet
+      - kubectl
+
+  - name: apt-cache policy kubeadm
+    shell: apt update; apt-cache policy kubeadm
+
+  - name: hold kubelet kubeadm kubectl
+    shell: apt-mark hold kubelet kubeadm kubectl
+
+
+
+
+
+- name: Add KUBECONFIG to master
+  hosts: server1
+  become: yes
+  tasks:
+
+  - name: kubeadm reset
+    command: kubeadm reset --force
+
+  - name: Initialize Kubernetes master
+    shell: kubeadm init --control-plane-endpoint "192.168.10.91:6443" --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address=192.168.10.91
+    ignore_errors: yes
+
+
+
+  - name: Add KUBECONFIG to root Bashrc
+    lineinfile:
+      path: /root/.bashrc
+      line: 'export KUBECONFIG=/etc/kubernetes/admin.conf'
+      backup: yes
+
+  - name: export KUBECONFIG
+    shell: export KUBECONFIG=/etc/kubernetes/admin.conf
+
+  - name: Get Token join
+    shell: kubeadm token create --print-join-command
+    register: kubeadm_output
+
+  
+  - name: Show kubeadm init output
+    debug:
+      msg: "{{ kubeadm_output.stdout }}"
+
+
+  - name: Install flannel network plugin
+    command: kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+    ignore_errors: yes
+
+
+- name: Join worker nodes to the cluster
+  hosts: nodes
+  become: yes
+  tasks:   
+
+  - name: kubeadm reset
+    command: kubeadm reset --force
+
+
+
+  - name: Join worker nodes to the cluster
+    command: "{{ hostvars['server1']['kubeadm_output']['stdout'] }}"
+    when: "'kubeadm join' in hostvars['server1']['kubeadm_output']['stdout']"

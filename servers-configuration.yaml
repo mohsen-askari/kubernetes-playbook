@@ -6,7 +6,7 @@
   - name: Swapoff all swap partitions 
     command: swapoff -a
 
-  - name: Copy containerd config using shell
+  - name: Disable SWAP in fstab 
     shell: sed --i '\|swap|s|^/|#/|g' /etc/fstab
 
   - name: To use the systemd cgroup driver in containerd with runc
