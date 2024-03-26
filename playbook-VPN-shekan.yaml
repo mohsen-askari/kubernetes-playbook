@@ -1,0 +1,14 @@
+- name: Servers Configuration
+  hosts: all
+  become: true
+
+  tasks:
+  - name: Add Shekan nameservers to /etc/resolv.conf
+    lineinfile:
+      path: /etc/resolv.conf
+      state: present
+      create: yes  # Create the file if it doesn't exist
+      line: "nameserver {{ item }}"
+      with_items:
+        - 178.22.122.100
+        - 185.51.200.2

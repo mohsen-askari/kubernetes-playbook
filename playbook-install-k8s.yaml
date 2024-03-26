@@ -4,7 +4,10 @@
 
   tasks:
 
-
+  - name: apt update
+    shell: apt update
+    
+    
   - name: Add to kubernetes.list
     shell: echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list
 
@@ -57,7 +60,7 @@
     command: kubeadm reset --force
 
   - name: Initialize Kubernetes master
-    shell: kubeadm init --control-plane-endpoint "192.168.10.91:6443" --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address=192.168.10.91
+    shell: kubeadm init --control-plane-endpoint "192.168.1.91:6443" --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address=192.168.1.91
     ignore_errors: yes
 
 
@@ -94,7 +97,9 @@
   - name: kubeadm reset
     command: kubeadm reset --force
 
-
+  - name: Show kubeadm init output
+    debug:
+      msg: "{{ hostvars['server1']['kubeadm_output']['stdout'] }}"
 
   - name: Join worker nodes to the cluster
     command: "{{ hostvars['server1']['kubeadm_output']['stdout'] }}"
