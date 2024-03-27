@@ -1,0 +1,39 @@
+- name: Retrieve versions of kubelet, kubectl, kubeadm, Docker, and containerd
+  hosts: all
+  tasks:
+  - name: Get kubelet version
+    command: systemctl status kubelet | grep Version
+    register: kubelet_version
+
+  - name: Get kubectl version
+    command: kubectl version
+    register: kubectl_version
+
+  - name: Get kubeadm version
+    command: kubeadm version
+    register: kubeadm_version
+
+  - name: Get Docker version
+    command: docker version
+    register: docker_version
+
+  - name: Get containerd version (using CLI)
+    command: containerd --version
+    register: containerd_version
+    when: >
+      command.stdout.find("version:") != -1
+
+  - name: Get containerd version (using systemd)
+    command: systemctl status containerd | grep Version
+    register: containerd_version
+    when: >
+      command.stdout.find("version:") == -1
+
+  - name: Print versions
+    debug:
+      msg:
+        - "kubelet: {{ kubelet_version.stdout }}"
+        - "kubectl: {{ kubectl_version.stdout }}"
+        - "kubeadm: {{ kubeadm_version.stdout }}"
+        - "Docker: {{ docker_version.stdout }}"
+        - "containerd: {{ containerd_version.stdout }}"
