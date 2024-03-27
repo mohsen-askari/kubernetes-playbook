@@ -1,0 +1,15 @@
+- name: Join nodes
+  hosts: nodes
+  become: yes
+
+  tasks:
+  - name: kubeadm reset
+    command: kubeadm reset --force
+
+  - name: Show kubeadm init output
+    debug:
+      msg: "{{ hostvars['server1']['kubeadm_output']['stdout'] }}"
+
+  - name: Join worker nodes to the cluster
+    command: "{{ hostvars['server1']['kubeadm_output']['stdout'] }}"
+    when: "'kubeadm join' in hostvars['server1']['kubeadm_output']['stdout']"
