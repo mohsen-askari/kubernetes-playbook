@@ -2,32 +2,38 @@
   hosts: all
   tasks:
   - name: Get kubelet version
-    command: systemctl status kubelet | grep Version
+    shell:  kubelet --version
     register: kubelet_version
+    ignore_errors: yes
 
   - name: Get kubectl version
-    command: kubectl version
+    shell: kubectl version
     register: kubectl_version
+    ignore_errors: yes
 
   - name: Get kubeadm version
-    command: kubeadm version
+    shell: kubeadm version
     register: kubeadm_version
+    ignore_errors: yes
 
   - name: Get Docker version
-    command: docker version
+    shell: docker version
     register: docker_version
+    ignore_errors: yes
 
   - name: Get containerd version (using CLI)
-    command: containerd --version
+    shell: containerd --version
     register: containerd_version
     when: >
       command.stdout.find("version:") != -1
+    ignore_errors: yes
 
   - name: Get containerd version (using systemd)
-    command: systemctl status containerd | grep Version
+    shell: systemctl status containerd | grep Version
     register: containerd_version
     when: >
       command.stdout.find("version:") == -1
+    ignore_errors: yes
 
   - name: Print versions
     debug:

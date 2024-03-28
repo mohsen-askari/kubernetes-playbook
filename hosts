@@ -1,0 +1,9 @@
+[masters]
+server1 ansible_host=192.168.10.91
+
+
+
+[nodes]
+server2 ansible_host=192.168.10.92
+server3 ansible_host=192.168.10.93
+
