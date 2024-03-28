@@ -39,15 +39,22 @@
       mode: 0755
 
   - name: Add Docker GPG apt Key
-    apt_key:
-      url: https://download.docker.com/linux/ubuntu/gpg
-      state: present
+    shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
 
 
   - name: Set permissions for Docker GPG key
-    file:
-      path: /etc/apt/keyrings/docker.asc
-      mode: 0444
+    shell: sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+  # - name: Add Docker GPG apt Key
+  #   apt_key:
+  #     url: https://download.docker.com/linux/ubuntu/gpg
+  #     state: present
+
+
+  # - name: Set permissions for Docker GPG key
+  #   file:
+  #     path: /etc/apt/keyrings/docker.asc
+  #     mode: 0444
 
 
   - name: Add Docker Repository
