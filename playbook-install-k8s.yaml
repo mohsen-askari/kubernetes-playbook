@@ -89,6 +89,17 @@
     command: kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
     ignore_errors: yes
 
+  - name: kubectl completion bash
+    shell: kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl > /dev/null
+
+  - name: alias k=kubectl
+    shell: echo 'alias k=kubectl' >> ~/.bashrc
+
+  - name: complete -F __start_kubectl k to ~/.bashrc
+    shell: echo 'complete -F __start_kubectl k' >> ~/.bashrc
+
+  - name: run bash -l
+    shell: bash -l
 
 - name: Join worker nodes to the cluster
   hosts: nodes
